@@ -1,3 +1,5 @@
+use nullable::{Nullable, null};
+
 #[derive(Default, Drop)]
 struct Attribute {
     name: ByteArray,
@@ -7,7 +9,8 @@ struct Attribute {
 #[derive(Drop)]
 struct Tag {
     name: ByteArray,
-    attrs: Array<Attribute>
+    attrs: Array<Attribute>,
+    children: Nullable<Array<Tag>>
 }
 
 trait TagBuilder<T> {
@@ -20,7 +23,8 @@ impl TagImpl of TagBuilder<Tag> {
     fn new(name: ByteArray) -> Tag {
         Tag {
             name: name,
-            attrs: Default::default()
+            attrs: Default::default(),
+            children: null()
         }
     }
 
@@ -54,6 +58,7 @@ impl TagImpl of TagBuilder<Tag> {
 
 #[cfg(test)]
 mod tests {
+    use nullable::{FromNullableResult, Nullable, match_nullable, null};
     use super::{Attribute, Tag, TagImpl};
 
     #[test]
@@ -62,6 +67,10 @@ mod tests {
         let tag: Tag = TagImpl::new("html");
         assert(tag.name == "html", 'name');
         assert(tag.attrs.len() == 0, 'attrs len');
+        match match_nullable(tag.children) {
+            FromNullableResult::Null => assert(true, 'children'),
+            FromNullableResult::NotNull(_) => assert(false, 'children'),
+        }
     }
 
     #[test]
