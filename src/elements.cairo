@@ -7,32 +7,41 @@ struct Attribute {
 #[derive(Drop)]
 struct Tag {
     name: ByteArray,
+    // TODO: why not attrs as Option?
+    //       alternatively, why not children and content as default arr?
     attrs: Array<Attribute>,
-    children: Option<Array<Tag>>
+    children: Option<Array<Tag>>,
+    content: Option<ByteArray>
 }
 
 trait TagBuilder<T> {
     fn new(name: ByteArray) -> T;
     fn build(self: T) -> ByteArray;
     fn attr(self: T, name: ByteArray, value: ByteArray) -> T;
+    fn content(self: T, content: ByteArray) -> T;
     fn insert(self: T, child: T) -> T;
 }
 
+use debug::PrintTrait;
 impl TagImpl of TagBuilder<Tag> {
     fn new(name: ByteArray) -> Tag {
         Tag {
             name: name,
             attrs: Default::default(),
-            children: Option::None
+            children: Option::None,
+            content: Option::None
         }
     }
 
+
+
     fn build(self: Tag) -> ByteArray {
-        if self.attrs.len().is_zero() && self.children.is_none() {
+        if self.attrs.len().is_zero() && self.children.is_none() && self.content.is_none() {
             return "<" + self.name + " />";
         }
 
         let mut s = "<" + self.name.clone();
+
         let mut attrs = self.attrs.span();
         loop {
             match attrs.pop_front() {
@@ -40,34 +49,45 @@ impl TagImpl of TagBuilder<Tag> {
                     s += " " + attr.name.clone() + "=\"" + attr.value.clone() + "\"";
                 },
                 Option::None => {
-                    if self.children.is_none() {
-                        s += " />";
-                    } else {
-                        s += ">";
-                        let mut children = self.children.unwrap();
-                        loop {
-                            match children.pop_front() {
-                                Option::Some(child) => {
-                                    s += child.build();
-                                },
-                                Option::None => {
-                                    break;
-                                },
-                            };
-
-                        };
-                        s += "</" + self.name + ">";
-                    }
                     break;
                 },
             };
         };
 
-        s
+        if self.children.is_none() && self.content.is_none() {
+            return s + " />";
+        } else {
+            s += ">";
+        }
+
+        if self.children.is_some() {
+            let mut children = self.children.unwrap();
+            loop {
+                match children.pop_front() {
+                    Option::Some(child) => {
+                        s += child.build();
+                    },
+                    Option::None => {
+                        break;
+                    },
+                };
+            };
+        }
+
+        if self.content.is_some() {
+            s += self.content.unwrap();
+        }
+
+        s + "</" + self.name + ">"
     }
 
     fn attr(mut self: Tag, name: ByteArray, value: ByteArray) -> Tag {
         self.attrs.append(Attribute { name, value });
+        self
+    }
+
+    fn content(mut self: Tag, content: ByteArray) -> Tag {
+        self.content = Option::Some(content);
         self
     }
 
@@ -88,8 +108,8 @@ impl TagImpl of TagBuilder<Tag> {
 
 #[cfg(test)]
 mod tests {
-    use csvg::elements::TagBuilder;
-use super::{Attribute, Tag, TagImpl};
+    use core::array::ArrayTrait;
+    use super::{Attribute, Tag, TagImpl};
 
     #[test]
     #[available_gas(1000000)]
@@ -98,6 +118,7 @@ use super::{Attribute, Tag, TagImpl};
         assert(tag.name == "html", 'name');
         assert(tag.attrs.len() == 0, 'attrs len');
         assert(tag.children.is_none(), 'children');
+        assert(tag.content.is_none(), 'content');
     }
 
     #[test]
@@ -119,6 +140,23 @@ use super::{Attribute, Tag, TagImpl};
         let rect: Tag = TagImpl::new("rect").attr("width", "200").attr("height", "100");
         assert(rect.attrs.len() == 2, 'attrs len 2');
         assert(rect.build() == "<rect width=\"200\" height=\"100\" />", 'build rect 2');
+    }
+
+    #[test]
+    #[available_gas(100000000)]
+    fn test_build_with_content() {
+        let div: Tag = TagImpl::new("div").content("Hello, world!");
+        assert(div.content.is_some(), 'content is some');
+        assert(div.build() == "<div>Hello, world!</div>", 'build div');
+    }
+
+    #[test]
+    #[available_gas(100000000)]
+    fn test_build_with_attrs_and_content() {
+        let div: Tag = TagImpl::new("div").attr("class", "big").content("Hello, world!");
+        assert(div.attrs.len() == 1, 'attrs len 1');
+        assert(div.content.is_some(), 'content is some');
+        assert(div.build() == "<div class=\"big\">Hello, world!</div>", 'build div');
     }
 
     #[test]
