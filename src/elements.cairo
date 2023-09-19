@@ -1,4 +1,4 @@
-#[derive(Default, Drop)]
+#[derive(Drop)]
 struct Attribute {
     name: ByteArray,
     value: ByteArray
@@ -7,9 +7,7 @@ struct Attribute {
 #[derive(Drop)]
 struct Tag {
     name: ByteArray,
-    // TODO: why not attrs as Option?
-    //       alternatively, why not children and content as default arr?
-    attrs: Array<Attribute>,
+    attrs: Option<Array<Attribute>>,
     children: Option<Array<Tag>>,
     content: Option<ByteArray>
 }
@@ -22,27 +20,24 @@ trait TagBuilder<T> {
     fn insert(self: T, child: T) -> T;
 }
 
-use debug::PrintTrait;
 impl TagImpl of TagBuilder<Tag> {
     fn new(name: ByteArray) -> Tag {
         Tag {
             name: name,
-            attrs: Default::default(),
+            attrs: Option::None,
             children: Option::None,
             content: Option::None
         }
     }
 
-
-
     fn build(self: Tag) -> ByteArray {
-        if self.attrs.len().is_zero() && self.children.is_none() && self.content.is_none() {
+        if self.attrs.is_none() && self.children.is_none() && self.content.is_none() {
             return "<" + self.name + " />";
         }
 
         let mut s = "<" + self.name.clone();
 
-        let mut attrs = self.attrs.span();
+        let mut attrs = self.attrs.unwrap();
         loop {
             match attrs.pop_front() {
                 Option::Some(attr) => {
@@ -82,7 +77,15 @@ impl TagImpl of TagBuilder<Tag> {
     }
 
     fn attr(mut self: Tag, name: ByteArray, value: ByteArray) -> Tag {
-        self.attrs.append(Attribute { name, value });
+        let mut attrs = match self.attrs {
+            Option::Some(attrs) => attrs,
+            Option::None => {
+                Default::default()
+            }
+        };
+
+        attrs.append(Attribute { name, value });
+        self.attrs = Option::Some(attrs);
         self
     }
 
@@ -101,7 +104,6 @@ impl TagImpl of TagBuilder<Tag> {
 
         children.append(child);
         self.children = Option::Some(children);
-
         self
     }
 }
@@ -116,7 +118,7 @@ mod tests {
     fn test_new() {
         let tag: Tag = TagImpl::new("html");
         assert(tag.name == "html", 'name');
-        assert(tag.attrs.len() == 0, 'attrs len');
+        assert(tag.attrs.is_none(), 'attrs');
         assert(tag.children.is_none(), 'children');
         assert(tag.content.is_none(), 'content');
     }
@@ -133,12 +135,10 @@ mod tests {
     fn test_build_with_attrs() {
         // with just one attr
         let rect: Tag = TagImpl::new("rect").attr("width", "200");
-        assert(rect.attrs.len() == 1, 'attrs len 1');
         assert(rect.build() == "<rect width=\"200\" />", 'build rect 1');
 
         // with two attrs
         let rect: Tag = TagImpl::new("rect").attr("width", "200").attr("height", "100");
-        assert(rect.attrs.len() == 2, 'attrs len 2');
         assert(rect.build() == "<rect width=\"200\" height=\"100\" />", 'build rect 2');
     }
 
@@ -154,7 +154,7 @@ mod tests {
     #[available_gas(100000000)]
     fn test_build_with_attrs_and_content() {
         let div: Tag = TagImpl::new("div").attr("class", "big").content("Hello, world!");
-        assert(div.attrs.len() == 1, 'attrs len 1');
+        assert(div.attrs.is_some(), 'attrs len 1');
         assert(div.content.is_some(), 'content is some');
         assert(div.build() == "<div class=\"big\">Hello, world!</div>", 'build div');
     }
