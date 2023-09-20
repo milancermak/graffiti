@@ -12,12 +12,67 @@ struct Tag {
     content: Option<ByteArray>
 }
 
+trait ToString<T> {
+    fn to_string(self: T) -> ByteArray;
+}
+
 trait TagBuilder<T> {
     fn new(name: ByteArray) -> T;
     fn build(self: T) -> ByteArray;
     fn attr(self: T, name: ByteArray, value: ByteArray) -> T;
     fn content(self: T, content: ByteArray) -> T;
     fn insert(self: T, child: T) -> T;
+}
+
+impl AttributeToString of ToString<Attribute> {
+    #[inline]
+    fn to_string(self: Attribute) -> ByteArray {
+        self.name + "=\"" + self.value + "\""
+    }
+}
+
+impl AttributeArrayToString of ToString<Array<Attribute>> {
+    #[inline]
+    fn to_string(mut self: Array<Attribute>) -> ByteArray {
+        let mut s = "";
+        loop {
+            match self.pop_front() {
+                Option::Some(attr) => {
+                    s += " " + attr.to_string();
+                },
+                Option::None => {
+                    break;
+                },
+            };
+        };
+
+        s
+    }
+}
+
+impl TagToString of ToString<Tag> {
+    #[inline]
+    fn to_string(self: Tag) -> ByteArray {
+        self.build()
+    }
+}
+
+impl TagArrayToString of ToString<Array<Tag>> {
+    fn to_string(mut self: Array<Tag>) -> ByteArray {
+        let mut s = "";
+        loop {
+            match self.pop_front() {
+                Option::Some(tag) => {
+                    s += tag.to_string();
+                },
+                Option::None => {
+                    break;
+                },
+            };
+        };
+
+        s
+    }
 }
 
 impl TagImpl of TagBuilder<Tag> {
@@ -40,17 +95,7 @@ impl TagImpl of TagBuilder<Tag> {
         let mut s = "<" + name.clone();
 
         if attrs.is_some() {
-            let mut attrs = attrs.unwrap();
-            loop {
-                match attrs.pop_front() {
-                    Option::Some(attr) => {
-                        s += " " + attr.name.clone() + "=\"" + attr.value.clone() + "\"";
-                    },
-                    Option::None => {
-                        break;
-                    },
-                };
-            };
+            s += attrs.unwrap().to_string();
         }
 
         if children.is_none() && content.is_none() {
@@ -60,17 +105,7 @@ impl TagImpl of TagBuilder<Tag> {
         }
 
         if children.is_some() {
-            let mut children = children.unwrap();
-            loop {
-                match children.pop_front() {
-                    Option::Some(child) => {
-                        s += child.build();
-                    },
-                    Option::None => {
-                        break;
-                    },
-                };
-            };
+            s += children.unwrap().to_string();
         }
 
         if content.is_some() {
@@ -114,7 +149,7 @@ impl TagImpl of TagBuilder<Tag> {
 
 #[cfg(test)]
 mod tests {
-    use graffiti::elements::{Tag, TagImpl};
+    use super::{Tag, TagImpl};
 
     #[test]
     #[available_gas(1000000)]
