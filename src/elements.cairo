@@ -35,28 +35,32 @@ impl TagImpl of TagBuilder<Tag> {
             return "<" + self.name + " />";
         }
 
-        let mut s = "<" + self.name.clone();
+        let Tag { name, attrs, children, content } = self;
 
-        let mut attrs = self.attrs.unwrap();
-        loop {
-            match attrs.pop_front() {
-                Option::Some(attr) => {
-                    s += " " + attr.name.clone() + "=\"" + attr.value.clone() + "\"";
-                },
-                Option::None => {
-                    break;
-                },
+        let mut s = "<" + name.clone();
+
+        if attrs.is_some() {
+            let mut attrs = attrs.unwrap();
+            loop {
+                match attrs.pop_front() {
+                    Option::Some(attr) => {
+                        s += " " + attr.name.clone() + "=\"" + attr.value.clone() + "\"";
+                    },
+                    Option::None => {
+                        break;
+                    },
+                };
             };
-        };
+        }
 
-        if self.children.is_none() && self.content.is_none() {
+        if children.is_none() && content.is_none() {
             return s + " />";
         } else {
             s += ">";
         }
 
-        if self.children.is_some() {
-            let mut children = self.children.unwrap();
+        if children.is_some() {
+            let mut children = children.unwrap();
             loop {
                 match children.pop_front() {
                     Option::Some(child) => {
@@ -69,11 +73,11 @@ impl TagImpl of TagBuilder<Tag> {
             };
         }
 
-        if self.content.is_some() {
-            s += self.content.unwrap();
+        if content.is_some() {
+            s += content.unwrap();
         }
 
-        s + "</" + self.name + ">"
+        s + "</" + name + ">"
     }
 
     fn attr(mut self: Tag, name: ByteArray, value: ByteArray) -> Tag {
