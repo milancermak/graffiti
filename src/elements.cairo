@@ -114,8 +114,7 @@ impl TagImpl of TagBuilder<Tag> {
 
 #[cfg(test)]
 mod tests {
-    use core::array::ArrayTrait;
-    use super::{Attribute, Tag, TagImpl};
+    use graffiti::elements::{Tag, TagImpl};
 
     #[test]
     #[available_gas(1000000)]
@@ -207,8 +206,6 @@ mod tests {
         assert(built == "<div><p class=\"foo\" id=\"bar\" /></div>", 'built');
     }
 
-    use debug::PrintTrait;
-
     #[test]
     #[available_gas(100000000)]
     fn test_build_multiple_children_and_attrs() {
@@ -220,5 +217,23 @@ mod tests {
 
         let built = body.insert(h1).insert(h2).insert(p.insert(text)).build();
         assert(built == "<body><h1 class=\"main\" title=\"heading\" /><h2 class=\"sub\" title=\"subtitle\" /><p><text class=\"r\" /></p></body>", 'built');
+    }
+
+    #[test]
+    #[available_gas(100000000)]
+    fn test_build_mega() {
+        let html: Tag = TagImpl::new("html");
+        let head: Tag = TagImpl::new("head");
+        let meta: Tag = TagImpl::new("meta").attr("name", "keywords").attr("content", "graffiti, cairo, starknet");
+        let body: Tag = TagImpl::new("body");
+        let h1: Tag = TagImpl::new("h1").attr("class", "main").attr("title", "heading").content("This");
+        let h2: Tag = TagImpl::new("h2").attr("class", "sub").attr("title", "subtitle").content("What");
+        let p: Tag = TagImpl::new("p").content("Hello, world!");
+        let text_content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer convallis elit eu libero commodo";
+        let text: Tag = TagImpl::new("text").attr("class", "r").content(text_content);
+        let footer: Tag = TagImpl::new("footer").attr("id", "f1").content("The quick brown fox jumps over the lazy dog.");
+
+        let page = html.insert(head.insert(meta)).insert(body.insert(h1).insert(h2).insert(p.insert(text)).insert(footer));
+        assert(page.build() == "<html><head><meta name=\"keywords\" content=\"graffiti, cairo, starknet\" /></head><body><h1 class=\"main\" title=\"heading\">This</h1><h2 class=\"sub\" title=\"subtitle\">What</h2><p><text class=\"r\">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer convallis elit eu libero commodo</text>Hello, world!</p><footer id=\"f1\">The quick brown fox jumps over the lazy dog.</footer></body></html>", 'built');
     }
 }
