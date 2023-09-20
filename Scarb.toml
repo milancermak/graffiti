@@ -1,4 +1,10 @@
 [package]
 name = "graffiti"
 version = "0.1.0"
-# TODO: add attrs
+authors = ["Milan Cermak"]
+description = "A Cairo library for building XML-based markup documents."
+keywords = ["cairo", "svg", "html", "xml", "markup"]
+repository = "https://github.com/milancermak/graffiti"
+license-file = "LICENSE"
+
+[lib]
