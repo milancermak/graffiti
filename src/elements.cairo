@@ -37,12 +37,8 @@ impl AttributeArrayToString of ToString<Array<Attribute>> {
         let mut s = "";
         loop {
             match self.pop_front() {
-                Option::Some(attr) => {
-                    s += " " + attr.to_string();
-                },
-                Option::None => {
-                    break;
-                },
+                Option::Some(attr) => { s += " " + attr.to_string(); },
+                Option::None => { break; },
             };
         };
 
@@ -62,12 +58,8 @@ impl TagArrayToString of ToString<Array<Tag>> {
         let mut s = "";
         loop {
             match self.pop_front() {
-                Option::Some(tag) => {
-                    s += tag.to_string();
-                },
-                Option::None => {
-                    break;
-                },
+                Option::Some(tag) => { s += tag.to_string(); },
+                Option::None => { break; },
             };
         };
 
@@ -77,12 +69,7 @@ impl TagArrayToString of ToString<Array<Tag>> {
 
 impl TagImpl of TagBuilder<Tag> {
     fn new(name: ByteArray) -> Tag {
-        Tag {
-            name: name,
-            attrs: Option::None,
-            children: Option::None,
-            content: Option::None
-        }
+        Tag { name: name, attrs: Option::None, children: Option::None, content: Option::None }
     }
 
     fn build(self: Tag) -> ByteArray {
@@ -90,7 +77,7 @@ impl TagImpl of TagBuilder<Tag> {
             return "<" + self.name + " />";
         }
 
-        let Tag { name, attrs, children, content } = self;
+        let Tag{name, attrs, children, content } = self;
 
         let mut s = "<" + name.clone();
 
@@ -118,9 +105,7 @@ impl TagImpl of TagBuilder<Tag> {
     fn attr(mut self: Tag, name: ByteArray, value: ByteArray) -> Tag {
         let mut attrs = match self.attrs {
             Option::Some(attrs) => attrs,
-            Option::None => {
-                Default::default()
-            }
+            Option::None => { Default::default() }
         };
 
         attrs.append(Attribute { name, value });
@@ -136,9 +121,7 @@ impl TagImpl of TagBuilder<Tag> {
     fn insert(mut self: Tag, child: Tag) -> Tag {
         let mut children = match self.children {
             Option::Some(children) => children,
-            Option::None => {
-                Default::default()
-            }
+            Option::None => { Default::default() }
         };
 
         children.append(child);
@@ -251,7 +234,10 @@ mod tests {
         let text: Tag = TagImpl::new("text").attr("class", "r");
 
         let built = body.insert(h1).insert(h2).insert(p.insert(text)).build();
-        assert(built == "<body><h1 class=\"main\" title=\"heading\" /><h2 class=\"sub\" title=\"subtitle\" /><p><text class=\"r\" /></p></body>", 'built');
+        assert(
+            built == "<body><h1 class=\"main\" title=\"heading\" /><h2 class=\"sub\" title=\"subtitle\" /><p><text class=\"r\" /></p></body>",
+            'built'
+        );
     }
 
     #[test]
@@ -259,16 +245,33 @@ mod tests {
     fn test_build_mega() {
         let html: Tag = TagImpl::new("html");
         let head: Tag = TagImpl::new("head");
-        let meta: Tag = TagImpl::new("meta").attr("name", "keywords").attr("content", "graffiti, cairo, starknet");
+        let meta: Tag = TagImpl::new("meta")
+            .attr("name", "keywords")
+            .attr("content", "graffiti, cairo, starknet");
         let body: Tag = TagImpl::new("body");
-        let h1: Tag = TagImpl::new("h1").attr("class", "main").attr("title", "heading").content("This");
-        let h2: Tag = TagImpl::new("h2").attr("class", "sub").attr("title", "subtitle").content("What");
+        let h1: Tag = TagImpl::new("h1")
+            .attr("class", "main")
+            .attr("title", "heading")
+            .content("This");
+        let h2: Tag = TagImpl::new("h2")
+            .attr("class", "sub")
+            .attr("title", "subtitle")
+            .content("What");
         let p: Tag = TagImpl::new("p").content("Hello, world!");
-        let text_content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer convallis elit eu libero commodo";
+        let text_content =
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer convallis elit eu libero commodo";
         let text: Tag = TagImpl::new("text").attr("class", "r").content(text_content);
-        let footer: Tag = TagImpl::new("footer").attr("id", "f1").content("The quick brown fox jumps over the lazy dog.");
+        let footer: Tag = TagImpl::new("footer")
+            .attr("id", "f1")
+            .content("The quick brown fox jumps over the lazy dog.");
 
-        let page = html.insert(head.insert(meta)).insert(body.insert(h1).insert(h2).insert(p.insert(text)).insert(footer));
-        assert(page.build() == "<html><head><meta name=\"keywords\" content=\"graffiti, cairo, starknet\" /></head><body><h1 class=\"main\" title=\"heading\">This</h1><h2 class=\"sub\" title=\"subtitle\">What</h2><p><text class=\"r\">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer convallis elit eu libero commodo</text>Hello, world!</p><footer id=\"f1\">The quick brown fox jumps over the lazy dog.</footer></body></html>", 'built');
+        let page = html
+            .insert(head.insert(meta))
+            .insert(body.insert(h1).insert(h2).insert(p.insert(text)).insert(footer));
+        assert(
+            page
+                .build() == "<html><head><meta name=\"keywords\" content=\"graffiti, cairo, starknet\" /></head><body><h1 class=\"main\" title=\"heading\">This</h1><h2 class=\"sub\" title=\"subtitle\">What</h2><p><text class=\"r\">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer convallis elit eu libero commodo</text>Hello, world!</p><footer id=\"f1\">The quick brown fox jumps over the lazy dog.</footer></body></html>",
+            'built'
+        );
     }
 }
