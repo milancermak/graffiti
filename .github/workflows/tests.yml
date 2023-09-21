@@ -1,0 +1,27 @@
+name: Cairo test
+
+on:
+  push:
+    branches:
+        - master
+    paths-ignore:
+        - "**.md"
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+        - "**.md"
+
+jobs:
+  tests:
+    strategy:
+        matrix:
+            scarb: ["latest", "nightly"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: ${{ matrix.scarb }}
+      - run: scarb fmt --check
+      - run: scarb build
+      - run: scarb test
