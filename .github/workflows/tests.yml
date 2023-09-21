@@ -18,7 +18,10 @@ jobs:
         # regardless if one of them fails
         fail-fast: false
         matrix:
-            scarb: ["latest", "nightly"]
+            # scarb: ["latest", "nightly"]
+            # temporarily disabling latest because
+            # of fmt differences between latest and nightly
+            scarb: ["nightly"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
