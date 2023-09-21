@@ -14,6 +14,9 @@ on:
 jobs:
   tests:
     strategy:
+        # ensure both latest and nightly are tested
+        # regardless if one of them fails
+        fail-fast: false
         matrix:
             scarb: ["latest", "nightly"]
     runs-on: ubuntu-latest
