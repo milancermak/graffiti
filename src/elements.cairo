@@ -1,3 +1,7 @@
+//
+// Attribute
+//
+
 #[derive(Drop)]
 struct Attribute {
     name: ByteArray,
@@ -9,6 +13,32 @@ impl AttributeClone of Clone<Attribute> {
         Attribute { name: self.name.clone(), value: self.value.clone() }
     }
 }
+
+impl AttributeToBytes of super::ToBytes<Attribute> {
+    #[inline]
+    fn to_bytes(self: Attribute) -> ByteArray {
+        self.name + "=\"" + self.value + "\""
+    }
+}
+
+impl AttributeArrayToBytes of super::ToBytes<Array<Attribute>> {
+    #[inline]
+    fn to_bytes(mut self: Array<Attribute>) -> ByteArray {
+        let mut s = "";
+        loop {
+            match self.pop_front() {
+                Option::Some(attr) => { s += " " + attr.to_bytes(); },
+                Option::None => { break; },
+            };
+        };
+
+        s
+    }
+}
+
+//
+// Tag
+//
 
 #[derive(Drop)]
 struct Tag {
@@ -39,36 +69,6 @@ impl TagClone of Clone<Tag> {
     }
 }
 
-trait TagBuilder<T> {
-    fn new(name: ByteArray) -> T;
-    fn build(self: T) -> ByteArray;
-    fn attr(self: T, name: ByteArray, value: ByteArray) -> T;
-    fn content(self: T, content: ByteArray) -> T;
-    fn insert(self: T, child: T) -> T;
-}
-
-impl AttributeToBytes of super::ToBytes<Attribute> {
-    #[inline]
-    fn to_bytes(self: Attribute) -> ByteArray {
-        self.name + "=\"" + self.value + "\""
-    }
-}
-
-impl AttributeArrayToBytes of super::ToBytes<Array<Attribute>> {
-    #[inline]
-    fn to_bytes(mut self: Array<Attribute>) -> ByteArray {
-        let mut s = "";
-        loop {
-            match self.pop_front() {
-                Option::Some(attr) => { s += " " + attr.to_bytes(); },
-                Option::None => { break; },
-            };
-        };
-
-        s
-    }
-}
-
 impl TagToBytes of super::ToBytes<Tag> {
     #[inline]
     fn to_bytes(self: Tag) -> ByteArray {
@@ -88,6 +88,18 @@ impl TagArrayToBytes of super::ToBytes<Array<Tag>> {
 
         s
     }
+}
+
+//
+// TagBuilder trait
+//
+
+trait TagBuilder<T> {
+    fn new(name: ByteArray) -> T;
+    fn build(self: T) -> ByteArray;
+    fn attr(self: T, name: ByteArray, value: ByteArray) -> T;
+    fn content(self: T, content: ByteArray) -> T;
+    fn insert(self: T, child: T) -> T;
 }
 
 impl TagImpl of TagBuilder<Tag> {
