@@ -12,10 +12,6 @@ struct Tag {
     content: Option<ByteArray>
 }
 
-trait ToString<T> {
-    fn to_string(self: T) -> ByteArray;
-}
-
 trait TagBuilder<T> {
     fn new(name: ByteArray) -> T;
     fn build(self: T) -> ByteArray;
@@ -24,20 +20,20 @@ trait TagBuilder<T> {
     fn insert(self: T, child: T) -> T;
 }
 
-impl AttributeToString of ToString<Attribute> {
+impl AttributeToBytes of super::ToBytes<Attribute> {
     #[inline]
-    fn to_string(self: Attribute) -> ByteArray {
+    fn to_bytes(self: Attribute) -> ByteArray {
         self.name + "=\"" + self.value + "\""
     }
 }
 
-impl AttributeArrayToString of ToString<Array<Attribute>> {
+impl AttributeArrayToBytes of super::ToBytes<Array<Attribute>> {
     #[inline]
-    fn to_string(mut self: Array<Attribute>) -> ByteArray {
+    fn to_bytes(mut self: Array<Attribute>) -> ByteArray {
         let mut s = "";
         loop {
             match self.pop_front() {
-                Option::Some(attr) => { s += " " + attr.to_string(); },
+                Option::Some(attr) => { s += " " + attr.to_bytes(); },
                 Option::None => { break; },
             };
         };
@@ -46,19 +42,19 @@ impl AttributeArrayToString of ToString<Array<Attribute>> {
     }
 }
 
-impl TagToString of ToString<Tag> {
+impl TagToBytes of super::ToBytes<Tag> {
     #[inline]
-    fn to_string(self: Tag) -> ByteArray {
+    fn to_bytes(self: Tag) -> ByteArray {
         self.build()
     }
 }
 
-impl TagArrayToString of ToString<Array<Tag>> {
-    fn to_string(mut self: Array<Tag>) -> ByteArray {
+impl TagArrayToBytes of super::ToBytes<Array<Tag>> {
+    fn to_bytes(mut self: Array<Tag>) -> ByteArray {
         let mut s = "";
         loop {
             match self.pop_front() {
-                Option::Some(tag) => { s += tag.to_string(); },
+                Option::Some(tag) => { s += tag.to_bytes(); },
                 Option::None => { break; },
             };
         };
@@ -82,7 +78,7 @@ impl TagImpl of TagBuilder<Tag> {
         let mut s = "<" + name.clone();
 
         if attrs.is_some() {
-            s += attrs.unwrap().to_string();
+            s += attrs.unwrap().to_bytes();
         }
 
         if children.is_none() && content.is_none() {
@@ -92,7 +88,7 @@ impl TagImpl of TagBuilder<Tag> {
         }
 
         if children.is_some() {
-            s += children.unwrap().to_string();
+            s += children.unwrap().to_bytes();
         }
 
         if content.is_some() {
