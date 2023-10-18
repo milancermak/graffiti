@@ -4,12 +4,39 @@ struct Attribute {
     value: ByteArray
 }
 
+impl AttributeClone of Clone<Attribute> {
+    fn clone(self: @Attribute) -> Attribute {
+        Attribute { name: self.name.clone(), value: self.value.clone() }
+    }
+}
+
 #[derive(Drop)]
 struct Tag {
     name: ByteArray,
     attrs: Option<Array<Attribute>>,
     children: Option<Array<Tag>>,
     content: Option<ByteArray>
+}
+
+impl TagClone of Clone<Tag> {
+    fn clone(self: @Tag) -> Tag {
+        let attrs = match self.attrs {
+            Option::Some(attrs) => Option::Some(attrs.clone()),
+            Option::None => Option::None
+        };
+
+        let children = match self.children {
+            Option::Some(children) => Option::Some(children.clone()),
+            Option::None => Option::None
+        };
+
+        let content = match self.content {
+            Option::Some(content) => Option::Some(content.clone()),
+            Option::None => Option::None
+        };
+
+        Tag { name: self.name.clone(), attrs, children, content }
+    }
 }
 
 trait TagBuilder<T> {
