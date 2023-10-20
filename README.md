@@ -71,4 +71,4 @@ use graffiti::{Tag, TagImpl};
 
 ### Examples
 
-Check the [examples](./examples/) folder to see how to build a minimal HTML page and the Starknet logo in SVG using the library.
+Check the [examples](./examples/) folder to see how to build a minimal HTML page, the Starknet logo in SVG or a single Loot bag using this library.
