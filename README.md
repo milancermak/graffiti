@@ -1,5 +1,7 @@
 # Graffiti
 
+![tests](https://github.com/milancermak/graffiti/actions/workflows/tests.yml/badge.svg)
+
 Graffiti is a Cairo library for building XML based documents - think SVG, HTML, RSS. If it has a `<tag with="attribute">`, you can use Graffiti.
 
 ![](./graffiti.png)

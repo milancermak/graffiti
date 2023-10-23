@@ -1,4 +1,4 @@
-name: Cairo test
+name: Tests
 
 on:
   push:
