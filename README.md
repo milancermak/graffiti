@@ -4,6 +4,15 @@ Graffiti is a Cairo library for building XML based documents - think SVG, HTML, 
 
 ![](./graffiti.png)
 
+## Installation
+
+Add the package as a dependency in Scarb.toml:
+
+```toml
+[dependencies]
+graffiti = { git = "https://github.com/milancermak/graffiti.git" }
+```
+
 ## Usage
 
 The main building block of a XML document is a tag. In Graffiti, it's represented by the `Tag` type:
