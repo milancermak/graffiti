@@ -27,7 +27,6 @@ trait AttributeTrait<Attribute> {
 }
 
 impl AttributeImpl of AttributeTrait<Attribute> {
-
     fn to_bytes(mut self: Attribute) -> ByteArray {
         let mut ba1 = Default::default();
 
@@ -42,7 +41,7 @@ impl AttributeImpl of AttributeTrait<Attribute> {
             ba1.append_word(QUOTE, 1);
             ba1.append(@self.value);
             ba1.append_word(QUOTE, 1);
-        }        
+        }
         ba1
     }
 }
@@ -61,7 +60,7 @@ impl JsonImpl of Builder<JsonBuilder> {
     }
 
     fn add(mut self: JsonBuilder, key: ByteArray, value: ByteArray) -> JsonBuilder {
-        self.data.append(Attribute { key, value});
+        self.data.append(Attribute { key, value });
         self
     }
 
@@ -82,17 +81,16 @@ impl JsonImpl of Builder<JsonBuilder> {
                         str.append_word(COMMA, 1);
                     }
                 },
-                Option::None => { 
+                Option::None => {
                     str.append_word(SQUARE_BRACKET_CLOSE, 1);
                     break;
                 },
             };
         };
 
-        self.data.append(Attribute { key, value: str});
+        self.data.append(Attribute { key, value: str });
         self
     }
-
 
 
     fn build(mut self: JsonBuilder) -> ByteArray {
@@ -130,7 +128,7 @@ mod tests {
             .build();
 
         assert!(
-            data == "{\"name\":\"Token Name\",\"description\":\"A description of what this token represents\"}", 
+            data == "{\"name\":\"Token Name\",\"description\":\"A description of what this token represents\"}",
             "wrong json data"
         );
 
@@ -139,13 +137,11 @@ mod tests {
 
     #[test]
     fn test_add_array() {
-
         let sub = JsonImpl::new()
-                    .add("streetAddress", "21 2nd Street")
-                    .add("city", "San Bryyy")
-                    .build();
-        let mainarr 
-            = JsonImpl::new()
+            .add("streetAddress", "21 2nd Street")
+            .add("city", "San Bryyy")
+            .build();
+        let mainarr = JsonImpl::new()
             .add("firstName", "John")
             .add("lastName", "Kevin")
             .add("address", sub.clone())
@@ -156,10 +152,10 @@ mod tests {
         let z = mainarr.build();
 
         assert!(
-            z == "{\"firstName\":\"John\",\"lastName\":\"Kevin\",\"address\":{\"streetAddress\":\"21 2nd Street\",\"city\":\"San Bryyy\"},\"list_of_str\":[\"trait_type\",\"Base\",\"value\",\"Starfish\"],\"attributes\":[{\"streetAddress\":\"21 2nd Street\",\"city\":\"San Bryyy\"},{\"streetAddress\":\"21 2nd Street\",\"city\":\"San Bryyy\"}],\"safety\":\"Green\"}", 
+            z == "{\"firstName\":\"John\",\"lastName\":\"Kevin\",\"address\":{\"streetAddress\":\"21 2nd Street\",\"city\":\"San Bryyy\"},\"list_of_str\":[\"trait_type\",\"Base\",\"value\",\"Starfish\"],\"attributes\":[{\"streetAddress\":\"21 2nd Street\",\"city\":\"San Bryyy\"},{\"streetAddress\":\"21 2nd Street\",\"city\":\"San Bryyy\"}],\"safety\":\"Green\"}",
             "wrong json data"
         );
 
-        println!("\n\njson: {}\n\n", z);       
+        println!("\n\njson: {}\n\n", z);
     }
 }
