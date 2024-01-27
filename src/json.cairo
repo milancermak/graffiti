@@ -156,7 +156,7 @@ mod tests {
         let z = mainarr.build();
 
         assert!(
-            z == "{\"firstName\":\"John\",\"lastName\":\"Kevin\",\"address\":{\"streetAddress\":\"21 2nd Street\",\"city\":\"San Bryyy\"},\"lsit_of_str\":[\"trait_type\",\"Base\",\"value\",\"Starfish\"],\"attributes\":[{\"streetAddress\":\"21 2nd Street\",\"city\":\"San Bryyy\"},{\"streetAddress\":\"21 2nd Street\",\"city\":\"San Bryyy\"}],\"safety\":\"Green\"}", 
+            z == "{\"firstName\":\"John\",\"lastName\":\"Kevin\",\"address\":{\"streetAddress\":\"21 2nd Street\",\"city\":\"San Bryyy\"},\"list_of_str\":[\"trait_type\",\"Base\",\"value\",\"Starfish\"],\"attributes\":[{\"streetAddress\":\"21 2nd Street\",\"city\":\"San Bryyy\"},{\"streetAddress\":\"21 2nd Street\",\"city\":\"San Bryyy\"}],\"safety\":\"Green\"}", 
             "wrong json data"
         );
 
