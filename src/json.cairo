@@ -149,7 +149,7 @@ mod tests {
             .add("firstName", "John")
             .add("lastName", "Kevin")
             .add("address", sub.clone())
-            .add_array("lsit_of_str", array!["trait_type", "Base", "value", "Starfish"].span())
+            .add_array("list_of_str", array!["trait_type", "Base", "value", "Starfish"].span())
             .add_array("attributes", array![sub.clone(), sub.clone()].span())
             .add("safety", "Green");
 
