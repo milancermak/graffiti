@@ -1,6 +1,8 @@
+use core::option::OptionTrait;
+use graffiti::ToBytes;
 use core::array::ArrayTrait;
-const BRACKET_OPEN: felt252 = '0x7b';
-const BRACKET_CLOSE: felt252 = '0x7d';
+const BRACKET_OPEN: felt252 = '{';
+const BRACKET_CLOSE: felt252 = '}';
 
 const QUOTE: felt252 = '"';
 const COLON: felt252 = ':';
@@ -14,8 +16,8 @@ const ATTRIBUTES: felt252 = 'attributes';
 const TRAIT_TYPE: felt252 = 'trait_type';
 const VALUE: felt252 = 'value';
 
-const SQUARE_BRACKET_OPEN: felt252 = '0x5b';
-const SQUARE_BRACKET_CLOSE: felt252 = '0x5d';
+const SQUARE_BRACKET_OPEN: felt252 = '[';
+const SQUARE_BRACKET_CLOSE: felt252 = ']';
 // {
 //   "name": "Token Name",
 //   "description": "A description of what this token represents",
@@ -36,8 +38,15 @@ const SQUARE_BRACKET_CLOSE: felt252 = '0x5d';
 struct Attribute {
     key: ByteArray,
     value: Option<ByteArray>,
-    children: Option<Array<Attribute>>
+    children: Option<JsonBuilder>
 }
+
+impl JsonBuilderDefault of Default<JsonBuilder> {
+    fn default() -> JsonBuilder {
+        JsonBuilder { data: Option::None }
+    }
+}
+
 
 #[derive(Drop)]
 struct JsonBuilder {
@@ -55,7 +64,6 @@ impl AttributeImpl of AttributeTrait<Attribute> {
         ba1.append(@self.key);
         ba1.append_word(QUOTE, 1);
         ba1.append_word(COLON, 1);
-        ba1.append_word(QUOTE, 1);
 
         let mut children = match self.children {
             Option::Some(children) => children,
@@ -67,27 +75,36 @@ impl AttributeImpl of AttributeTrait<Attribute> {
             Option::None => { Default::default() }
         };
 
-        if (children.len() > 0) {
-            ba1.append_word(SQUARE_BRACKET_OPEN, 1);
-            loop {
-                match children.pop_front() {
-                    Option::Some(attr) => {
-                        ba1.append(@attr.into().to_bytes());
-                        ba1.append_word(BRACKET_CLOSE, 2);
-                        if (children.len() > 1) {
-                            ba1.append_word(COMMA, 1);
-                        } else {
-                            ba1.append_word(SQUARE_BRACKET_CLOSE, 1);
-                        }
-                    },
-                    Option::None => { break; },
-                };
+        if (children.data.is_some()) {
+            let mut data = match children.data {
+                Option::Some(data) => data,
+                Option::None => { Default::default() }
             };
-        } else {
-            ba1.append(@value);
-        }
 
-        ba1.append_word(QUOTE, 1);
+            ba1.append_word(SQUARE_BRACKET_OPEN, 1);
+
+            if (data.len() > 0) {
+                loop {
+                    match data.pop_front() {
+                        Option::Some(attr) => {
+                            ba1.append_word(BRACKET_OPEN, 1);
+                            ba1.append(@attr.into().to_bytes());
+                            ba1.append_word(BRACKET_CLOSE, 1);
+                            if (data.len() == 1) {
+                                ba1.append_word(COMMA, 1);
+                            } else {
+                                ba1.append_word(SQUARE_BRACKET_CLOSE, 1);
+                            }
+                        },
+                        Option::None => { break; },
+                    };
+                };
+            }
+        } else {
+            ba1.append_word(QUOTE, 1);
+            ba1.append(@value);
+            ba1.append_word(QUOTE, 1);
+        }
 
         ba1
     }
@@ -96,7 +113,7 @@ impl AttributeImpl of AttributeTrait<Attribute> {
 trait Builder<T> {
     fn new(name: ByteArray) -> T;
     fn add(self: T, key: ByteArray, value: ByteArray) -> T;
-    fn add_array(self: T, key: ByteArray, value: Array<Attribute>) -> T;
+    fn add_array(self: T, key: ByteArray, value: JsonBuilder) -> T;
     fn build(self: T) -> ByteArray;
 }
 
@@ -115,7 +132,7 @@ impl JsonImpl of Builder<JsonBuilder> {
         self.data = Option::Some(data);
         self
     }
-    fn add_array(mut self: JsonBuilder, key: ByteArray, value: Array<Attribute>) -> JsonBuilder {
+    fn add_array(mut self: JsonBuilder, key: ByteArray, value: JsonBuilder) -> JsonBuilder {
         let mut data = match self.data {
             Option::Some(data) => data,
             Option::None => { Default::default() }
@@ -129,7 +146,7 @@ impl JsonImpl of Builder<JsonBuilder> {
     fn build(mut self: JsonBuilder) -> ByteArray {
         let mut ba1 = Default::default();
 
-        ba1.append_word(BRACKET_OPEN, 2);
+        ba1.append_word(BRACKET_OPEN, 1);
 
         let mut data = match self.data {
             Option::Some(data) => data,
@@ -140,7 +157,7 @@ impl JsonImpl of Builder<JsonBuilder> {
             match data.pop_front() {
                 Option::Some(attr) => {
                     ba1.append(@attr.into().to_bytes());
-                    ba1.append_word(BRACKET_CLOSE, 2);
+
                     if (data.len() == 1) {
                         ba1.append_word(COMMA, 1);
                     }
@@ -148,6 +165,8 @@ impl JsonImpl of Builder<JsonBuilder> {
                 Option::None => { break; },
             };
         };
+
+        ba1.append_word(BRACKET_CLOSE, 1);
 
         ba1
     }
@@ -166,6 +185,7 @@ mod tests {
         let h = h.add("description", "A description of what this token represents");
 
         let h = h.build();
+
         println!("json: {}", h);
     }
 
@@ -176,19 +196,14 @@ mod tests {
 
         let h = json.add("name", "Token Name");
 
-        let mut attributes: Array = Default::default();
+        // let mut attributes: Array = Default::default();
 
-        attributes
-            .append(
-                Attribute { key: "trait_type", value: Option::Some("Base"), children: Option::None }
-            );
+        let nested = JsonImpl::new("nested");
 
-        attributes
-            .append(
-                Attribute { key: "trait_type", value: Option::Some("Base"), children: Option::None }
-            );
+        let nested = nested.add("trait_type", "Base");
+        let nested = nested.add("value", "Starfish");
 
-        let h = h.add_array("attributes", attributes);
+        let h = h.add_array("attributes", nested);
 
         let h = h.build();
         println!("json: {}", h);
